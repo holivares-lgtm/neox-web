@@ -107,14 +107,17 @@ const FRONTIER_SOURCES = [
 ]
 
 function AnimatedCounter({ value, duration = 2000 }: { value: string; duration?: number }) {
-  const [display, setDisplay] = useState('0')
+  const [display, setDisplay] = useState(value)
+  const [started, setStarted] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
   const inView = useInView(ref, { once: true })
 
   useEffect(() => {
-    if (!inView) return
+    if (!inView || started) return
+    setStarted(true)
     const numeric = parseInt(value.replace(/\D/g, ''))
     const suffix = value.replace(/[0-9]/g, '')
+    setDisplay('0' + suffix)
     const start = Date.now()
     const tick = () => {
       const elapsed = Date.now() - start
@@ -124,7 +127,7 @@ function AnimatedCounter({ value, duration = 2000 }: { value: string; duration?:
       if (progress < 1) requestAnimationFrame(tick)
     }
     requestAnimationFrame(tick)
-  }, [inView, value, duration])
+  }, [inView, started, value, duration])
 
   return <span ref={ref}>{display}</span>
 }
