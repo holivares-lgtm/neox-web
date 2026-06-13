@@ -131,12 +131,137 @@ function Shell({ children }: { children: React.ReactNode }) {
   )
 }
 
+// ─── Modal popup con el enlace ────────────────────────────────────────────────
+function ModalEnlace({ enlace, onCerrar }: { enlace: string; onCerrar: () => void }) {
+  const [copiado, setCopiado] = useState(false)
+
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(enlace)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2500)
+    } catch {
+      // en algunos móviles el clipboard falla; el usuario puede copiar a mano
+    }
+  }
+
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(
+    `¡Te reto al Ahorcado! Adivina mi palabra 👇\n${enlace}`,
+  )}`
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 999,
+          background: 'rgba(5,12,22,0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px',
+        }}
+        onClick={onCerrar}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 40, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 40 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+          style={{
+            width: '100%', maxWidth: '460px',
+            background: 'var(--card)',
+            border: '1px solid rgba(9,105,172,0.5)',
+            borderRadius: '24px',
+            padding: '32px 28px',
+            display: 'flex', flexDirection: 'column', gap: '16px',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🎉</div>
+            <h2 style={{ color: 'white', fontWeight: 800, fontSize: '1.3rem', marginBottom: '4px' }}>
+              ¡Enlace generado!
+            </h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+              Mándaselo a tu rival para que adivine tu palabra
+            </p>
+          </div>
+
+          {/* URL para copiar a mano */}
+          <div style={{
+            background: 'rgba(5,12,22,0.9)',
+            border: '1px solid var(--border)',
+            borderRadius: '12px',
+            padding: '12px 14px',
+            fontSize: '11px',
+            color: '#1a8fd1',
+            fontFamily: 'monospace',
+            wordBreak: 'break-all',
+            userSelect: 'all',
+          }}>
+            {enlace}
+          </div>
+
+          {/* Copiar */}
+          <button
+            onClick={copiar}
+            style={{
+              width: '100%', minHeight: '62px',
+              background: copiado ? '#28a763' : 'var(--neox-blue)',
+              border: 'none', borderRadius: '16px',
+              color: 'white', fontWeight: 800, fontSize: '1rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 24px rgba(9,105,172,0.5)',
+              transition: 'background 0.2s',
+            }}
+          >
+            {copiado ? <><Check size={22} /> ¡Copiado!</> : <><Copy size={22} /> Copiar enlace</>}
+          </button>
+
+          {/* WhatsApp */}
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              width: '100%', minHeight: '58px',
+              background: 'rgba(37,211,102,0.12)',
+              border: '1px solid rgba(37,211,102,0.45)',
+              borderRadius: '16px',
+              color: '#25d366', fontWeight: 700, fontSize: '1rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+              textDecoration: 'none',
+            }}
+          >
+            <Send size={20} /> Enviar por WhatsApp
+          </a>
+
+          {/* Cerrar */}
+          <button
+            onClick={onCerrar}
+            style={{
+              background: 'none', border: '1px solid var(--border)',
+              borderRadius: '14px', padding: '12px',
+              color: 'var(--text-muted)', fontSize: '0.875rem',
+              cursor: 'pointer', fontWeight: 600,
+            }}
+          >
+            Cambiar palabra
+          </button>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
 // ─── Pantalla 1: crear el reto (Jugador 1) ────────────────────────────────────
 function CrearReto() {
   const [palabra, setPalabra] = useState('')
   const [pista, setPista] = useState('')
   const [enlace, setEnlace] = useState('')
-  const [copiado, setCopiado] = useState(false)
   const [verPalabra, setVerPalabra] = useState(false)
 
   const normalizada = useMemo(() => normalizeWord(palabra.trim()), [palabra])
@@ -148,171 +273,83 @@ function CrearReto() {
   const generar = () => {
     if (!valida) return
     const token = encodeReto({ w: normalizada, h: pista.trim() })
-    const url = `${window.location.origin}/ahorcado?reto=${token}`
-    setEnlace(url)
-    setCopiado(false)
+    setEnlace(`${window.location.origin}/ahorcado?reto=${token}`)
   }
 
-  const copiar = async () => {
-    try {
-      await navigator.clipboard.writeText(enlace)
-      setCopiado(true)
-      setTimeout(() => setCopiado(false), 2200)
-    } catch {
-      // fallback: el usuario puede copiar a mano
-    }
-  }
-
-  const waUrl = `https://wa.me/?text=${encodeURIComponent(
-    `¡Te reto al Ahorcado! Adivina mi palabra 👇\n${enlace}`,
-  )}`
-
-  // ── Vista 2: enlace generado ──────────────────────────────────────────────
-  if (enlace) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="rounded-3xl p-7 sm:p-8 flex flex-col gap-5"
-        style={{ background: 'var(--card)', border: '1px solid rgba(9,105,172,0.4)' }}
-      >
-        <div className="text-center">
-          <div className="text-4xl mb-3">🎉</div>
-          <h2 className="text-xl font-bold text-white mb-1">¡Enlace listo!</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Mándaselo a tu rival para que adivine tu palabra
-          </p>
-        </div>
-
-        {/* URL visible para copiar a mano */}
-        <div className="px-4 py-3 rounded-2xl text-xs break-all select-all"
-          style={{ background: 'rgba(5,12,22,0.8)', color: '#1a8fd1', fontFamily: 'monospace', border: '1px solid var(--border)' }}>
-          {enlace}
-        </div>
-
-        {/* Botón principal: copiar */}
-        <button
-          onClick={copiar}
-          className="w-full rounded-2xl font-bold text-white transition-all duration-200 inline-flex items-center justify-center gap-3"
-          style={{
-            padding: '20px 24px',
-            fontSize: '1.05rem',
-            minHeight: '64px',
-            background: copiado ? 'rgba(40,167,99,0.8)' : 'var(--neox-blue)',
-            boxShadow: '0 4px 24px rgba(9,105,172,0.45)',
-          }}
-        >
-          {copiado
-            ? <><Check size={22} /> ¡Copiado al portapapeles!</>
-            : <><Copy size={22} /> Copiar enlace</>}
-        </button>
-
-        {/* WhatsApp */}
-        <a
-          href={waUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full rounded-2xl font-bold transition-all duration-200 inline-flex items-center justify-center gap-3"
-          style={{
-            padding: '18px 24px',
-            fontSize: '1rem',
-            minHeight: '60px',
-            background: 'rgba(37,211,102,0.15)',
-            border: '1px solid rgba(37,211,102,0.4)',
-            color: '#25d366',
-          }}
-        >
-          <Send size={20} /> Enviar por WhatsApp
-        </a>
-
-        {/* Cambiar palabra */}
-        <button
-          onClick={() => { setEnlace(''); setPalabra(''); setPista('') }}
-          className="w-full rounded-2xl font-semibold transition-all duration-200 inline-flex items-center justify-center gap-2"
-          style={{
-            padding: '14px 24px',
-            minHeight: '52px',
-            border: '1px solid var(--border)',
-            color: 'var(--text-muted)',
-            fontSize: '0.9rem',
-          }}
-        >
-          <RotateCcw size={16} /> Cambiar palabra
-        </button>
-      </motion.div>
-    )
-  }
-
-  // ── Vista 1: formulario ───────────────────────────────────────────────────
   return (
-    <div className="rounded-3xl p-7 sm:p-8"
-      style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
-      <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>
-        Palabra o frase secreta
-      </label>
-      <div className="relative">
+    <>
+      {enlace && <ModalEnlace enlace={enlace} onCerrar={() => setEnlace('')} />}
+
+      <div className="rounded-3xl p-7 sm:p-8"
+        style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+        <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>
+          Palabra o frase secreta
+        </label>
+        <div className="relative">
+          <input
+            type={verPalabra ? 'text' : 'password'}
+            value={palabra}
+            onChange={(e) => setPalabra(e.target.value)}
+            placeholder="Ej: Murciélago"
+            autoComplete="off"
+            spellCheck={false}
+            maxLength={40}
+            className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all pr-11"
+            style={{ background: 'rgba(5,12,22,0.8)', border: '1px solid var(--border)', color: 'var(--text)' }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = '#0969AC' }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(9,105,172,0.2)' }}
+          />
+          <button
+            type="button"
+            onClick={() => setVerPalabra((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2"
+            style={{ color: 'var(--text-muted)' }}
+            aria-label={verPalabra ? 'Ocultar' : 'Mostrar'}
+          >
+            {verPalabra ? <EyeOff size={17} /> : <Eye size={17} />}
+          </button>
+        </div>
+
+        <label className="block text-xs font-medium mb-1.5 mt-5" style={{ color: 'var(--text-muted)' }}>
+          Pista (opcional)
+        </label>
         <input
-          type={verPalabra ? 'text' : 'password'}
-          value={palabra}
-          onChange={(e) => { setPalabra(e.target.value) }}
-          placeholder="Ej: Murciélago"
+          type="text"
+          value={pista}
+          onChange={(e) => setPista(e.target.value)}
+          placeholder="Ej: Animal nocturno"
           autoComplete="off"
-          spellCheck={false}
-          maxLength={40}
-          className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all pr-11"
+          maxLength={60}
+          className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
           style={{ background: 'rgba(5,12,22,0.8)', border: '1px solid var(--border)', color: 'var(--text)' }}
           onFocus={(e) => { e.currentTarget.style.borderColor = '#0969AC' }}
           onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(9,105,172,0.2)' }}
         />
+
+        {palabra.trim() && !valida && (
+          <p className="text-xs mt-3" style={{ color: '#e0796b' }}>
+            Escribe al menos una letra (A–Z o Ñ); máximo 40 caracteres.
+          </p>
+        )}
+
         <button
-          type="button"
-          onClick={() => setVerPalabra((v) => !v)}
-          className="absolute right-3 top-1/2 -translate-y-1/2"
-          style={{ color: 'var(--text-muted)' }}
-          aria-label={verPalabra ? 'Ocultar palabra' : 'Mostrar palabra'}
+          onClick={generar}
+          disabled={!valida}
+          style={{
+            width: '100%', marginTop: '24px',
+            padding: '20px 24px', minHeight: '64px',
+            background: valida ? 'var(--neox-blue)' : 'rgba(9,105,172,0.25)',
+            border: 'none', borderRadius: '16px',
+            color: 'white', fontWeight: 800, fontSize: '1.05rem',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+            cursor: valida ? 'pointer' : 'not-allowed',
+            boxShadow: valida ? '0 4px 24px rgba(9,105,172,0.45)' : 'none',
+          }}
         >
-          {verPalabra ? <EyeOff size={17} /> : <Eye size={17} />}
+          <Link2 size={20} /> Generar enlace para retar
         </button>
       </div>
-
-      <label className="block text-xs font-medium mb-1.5 mt-5" style={{ color: 'var(--text-muted)' }}>
-        Pista (opcional)
-      </label>
-      <input
-        type="text"
-        value={pista}
-        onChange={(e) => { setPista(e.target.value) }}
-        placeholder="Ej: Animal nocturno"
-        autoComplete="off"
-        maxLength={60}
-        className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
-        style={{ background: 'rgba(5,12,22,0.8)', border: '1px solid var(--border)', color: 'var(--text)' }}
-        onFocus={(e) => { e.currentTarget.style.borderColor = '#0969AC' }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(9,105,172,0.2)' }}
-      />
-
-      {palabra.trim() && !valida && (
-        <p className="text-xs mt-3" style={{ color: '#e0796b' }}>
-          Escribe al menos una letra (A–Z o Ñ); máximo 40 caracteres.
-        </p>
-      )}
-
-      <button
-        onClick={generar}
-        disabled={!valida}
-        className="w-full mt-6 rounded-2xl font-bold text-white transition-all duration-300 inline-flex items-center justify-center gap-3"
-        style={{
-          padding: '20px 24px',
-          fontSize: '1.05rem',
-          minHeight: '64px',
-          background: valida ? 'var(--neox-blue)' : 'rgba(9,105,172,0.25)',
-          cursor: valida ? 'pointer' : 'not-allowed',
-          boxShadow: valida ? '0 4px 24px rgba(9,105,172,0.45)' : 'none',
-        }}
-      >
-        <Link2 size={20} /> Generar enlace para retar
-      </button>
-    </div>
+    </>
   )
 }
 
