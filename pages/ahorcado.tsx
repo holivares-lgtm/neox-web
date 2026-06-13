@@ -136,12 +136,31 @@ function ModalEnlace({ enlace, onCerrar }: { enlace: string; onCerrar: () => voi
   const [copiado, setCopiado] = useState(false)
 
   const copiar = async () => {
+    let ok = false
     try {
       await navigator.clipboard.writeText(enlace)
+      ok = true
+    } catch {
+      // Respaldo para móviles/navegadores sin permiso de portapapeles
+      try {
+        const ta = document.createElement('textarea')
+        ta.value = enlace
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.focus()
+        ta.select()
+        ok = document.execCommand('copy')
+        document.body.removeChild(ta)
+      } catch {
+        ok = false
+      }
+    }
+    if (ok) {
       setCopiado(true)
       setTimeout(() => setCopiado(false), 2500)
-    } catch {
-      // en algunos móviles el clipboard falla; el usuario puede copiar a mano
+    } else {
+      alert('No se pudo copiar automáticamente. Mantén presionado el enlace de arriba para copiarlo.')
     }
   }
 
@@ -189,20 +208,26 @@ function ModalEnlace({ enlace, onCerrar }: { enlace: string; onCerrar: () => voi
             </p>
           </div>
 
-          {/* URL para copiar a mano */}
-          <div style={{
-            background: 'rgba(5,12,22,0.9)',
-            border: '1px solid var(--border)',
-            borderRadius: '12px',
-            padding: '12px 14px',
-            fontSize: '11px',
-            color: '#1a8fd1',
-            fontFamily: 'monospace',
-            wordBreak: 'break-all',
-            userSelect: 'all',
-          }}>
+          {/* URL clicable (abre el juego en otra pestaña para probar) */}
+          <a
+            href={enlace}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'block',
+              background: 'rgba(5,12,22,0.9)',
+              border: '1px solid var(--border)',
+              borderRadius: '12px',
+              padding: '12px 14px',
+              fontSize: '11px',
+              color: '#1a8fd1',
+              fontFamily: 'monospace',
+              wordBreak: 'break-all',
+              textDecoration: 'underline',
+            }}
+          >
             {enlace}
-          </div>
+          </a>
 
           {/* Copiar */}
           <button
