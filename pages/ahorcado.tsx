@@ -159,14 +159,91 @@ function CrearReto() {
       setCopiado(true)
       setTimeout(() => setCopiado(false), 2200)
     } catch {
-      // Si el portapapeles no está disponible, el usuario puede copiar a mano.
+      // fallback: el usuario puede copiar a mano
     }
   }
 
   const waUrl = `https://wa.me/?text=${encodeURIComponent(
-    `¡Te reto al Ahorcado! Adivina mi palabra: ${enlace}`,
+    `¡Te reto al Ahorcado! Adivina mi palabra 👇\n${enlace}`,
   )}`
 
+  // ── Vista 2: enlace generado ──────────────────────────────────────────────
+  if (enlace) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="rounded-3xl p-7 sm:p-8 flex flex-col gap-5"
+        style={{ background: 'var(--card)', border: '1px solid rgba(9,105,172,0.4)' }}
+      >
+        <div className="text-center">
+          <div className="text-4xl mb-3">🎉</div>
+          <h2 className="text-xl font-bold text-white mb-1">¡Enlace listo!</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            Mándaselo a tu rival para que adivine tu palabra
+          </p>
+        </div>
+
+        {/* URL visible para copiar a mano */}
+        <div className="px-4 py-3 rounded-2xl text-xs break-all select-all"
+          style={{ background: 'rgba(5,12,22,0.8)', color: '#1a8fd1', fontFamily: 'monospace', border: '1px solid var(--border)' }}>
+          {enlace}
+        </div>
+
+        {/* Botón principal: copiar */}
+        <button
+          onClick={copiar}
+          className="w-full rounded-2xl font-bold text-white transition-all duration-200 inline-flex items-center justify-center gap-3"
+          style={{
+            padding: '20px 24px',
+            fontSize: '1.05rem',
+            minHeight: '64px',
+            background: copiado ? 'rgba(40,167,99,0.8)' : 'var(--neox-blue)',
+            boxShadow: '0 4px 24px rgba(9,105,172,0.45)',
+          }}
+        >
+          {copiado
+            ? <><Check size={22} /> ¡Copiado al portapapeles!</>
+            : <><Copy size={22} /> Copiar enlace</>}
+        </button>
+
+        {/* WhatsApp */}
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full rounded-2xl font-bold transition-all duration-200 inline-flex items-center justify-center gap-3"
+          style={{
+            padding: '18px 24px',
+            fontSize: '1rem',
+            minHeight: '60px',
+            background: 'rgba(37,211,102,0.15)',
+            border: '1px solid rgba(37,211,102,0.4)',
+            color: '#25d366',
+          }}
+        >
+          <Send size={20} /> Enviar por WhatsApp
+        </a>
+
+        {/* Cambiar palabra */}
+        <button
+          onClick={() => { setEnlace(''); setPalabra(''); setPista('') }}
+          className="w-full rounded-2xl font-semibold transition-all duration-200 inline-flex items-center justify-center gap-2"
+          style={{
+            padding: '14px 24px',
+            minHeight: '52px',
+            border: '1px solid var(--border)',
+            color: 'var(--text-muted)',
+            fontSize: '0.9rem',
+          }}
+        >
+          <RotateCcw size={16} /> Cambiar palabra
+        </button>
+      </motion.div>
+    )
+  }
+
+  // ── Vista 1: formulario ───────────────────────────────────────────────────
   return (
     <div className="rounded-3xl p-7 sm:p-8"
       style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
@@ -177,7 +254,7 @@ function CrearReto() {
         <input
           type={verPalabra ? 'text' : 'password'}
           value={palabra}
-          onChange={(e) => { setPalabra(e.target.value); setEnlace('') }}
+          onChange={(e) => { setPalabra(e.target.value) }}
           placeholder="Ej: Murciélago"
           autoComplete="off"
           spellCheck={false}
@@ -204,7 +281,7 @@ function CrearReto() {
       <input
         type="text"
         value={pista}
-        onChange={(e) => { setPista(e.target.value); setEnlace('') }}
+        onChange={(e) => { setPista(e.target.value) }}
         placeholder="Ej: Animal nocturno"
         autoComplete="off"
         maxLength={60}
@@ -235,49 +312,6 @@ function CrearReto() {
       >
         <Link2 size={20} /> Generar enlace para retar
       </button>
-
-      <AnimatePresence>
-        {enlace && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-6 overflow-hidden"
-          >
-            <div className="p-4 rounded-2xl" style={{ background: 'rgba(9,105,172,0.08)', border: '1px solid var(--border)' }}>
-              <p className="text-xs mb-2 flex items-center gap-1.5" style={{ color: '#1a8fd1' }}>
-                <Sparkles size={13} /> ¡Enlace listo! Compártelo con tu rival:
-              </p>
-              <div className="text-xs break-all px-3 py-2.5 rounded-lg mb-3"
-                style={{ background: 'rgba(5,12,22,0.7)', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-                {enlace}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={copiar}
-                  className="flex-1 min-w-[130px] py-2.5 rounded-lg font-semibold text-sm inline-flex items-center justify-center gap-2 transition-all"
-                  style={{ background: copiado ? 'rgba(40,167,99,0.18)' : 'var(--neox-blue)', color: 'white' }}
-                >
-                  {copiado ? <><Check size={15} /> ¡Copiado!</> : <><Copy size={15} /> Copiar enlace</>}
-                </button>
-                <a
-                  href={waUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 min-w-[130px] py-2.5 rounded-lg font-semibold text-sm inline-flex items-center justify-center gap-2 transition-all"
-                  style={{ border: '1px solid var(--border)', color: 'var(--text)' }}
-                >
-                  <Send size={15} /> Enviar por WhatsApp
-                </a>
-              </div>
-              <p className="text-[11px] mt-3 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                👀 Ojo: la palabra va dentro del enlace (codificada). Es para jugar entre
-                amigos, no para guardar secretos.
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }
