@@ -223,14 +223,17 @@ function CrearReto() {
       <button
         onClick={generar}
         disabled={!valida}
-        className="w-full mt-6 py-4 rounded-xl font-bold text-sm text-white transition-all duration-300 inline-flex items-center justify-center gap-2"
+        className="w-full mt-6 rounded-2xl font-bold text-white transition-all duration-300 inline-flex items-center justify-center gap-3"
         style={{
+          padding: '20px 24px',
+          fontSize: '1.05rem',
+          minHeight: '64px',
           background: valida ? 'var(--neox-blue)' : 'rgba(9,105,172,0.25)',
           cursor: valida ? 'pointer' : 'not-allowed',
-          boxShadow: valida ? '0 4px 20px rgba(9,105,172,0.35)' : 'none',
+          boxShadow: valida ? '0 4px 24px rgba(9,105,172,0.45)' : 'none',
         }}
       >
-        <Link2 size={16} /> Generar enlace para retar
+        <Link2 size={20} /> Generar enlace para retar
       </button>
 
       <AnimatePresence>
